@@ -1,0 +1,37 @@
+name: Generate Docker Hosts File
+
+on:
+  schedule:
+    # 每 7 小时自动执行一次
+    - cron: '0 */7 * * *'
+  workflow_dispatch: # 支持手动一键运行
+
+permissions:
+  contents: write
+
+jobs:
+  update-docker-hosts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Docker Hosts Generator
+        run: python generate_docker_hosts.py
+
+      - name: Commit and Push hosts_Docker
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add hosts_Docker
+          if git diff --staged --quiet; then
+            echo "No changes detected in hosts_Docker"
+          else
+            git commit -m "auto: update hosts_Docker [$(date -u +'%Y-%m-%d %H:%M:%S UTC')]"
+            git push
+          fi
